@@ -1,0 +1,69 @@
+
+/*
+
+Script to create the destination tables for audited data. Remarks:
+
+1. One table is for general information about the transaction that generated the change
+2. Another table is for the actual data about the change (before and after state)
+3. Note the referential integrity between the tables for DELETE operations. This was done to simplify purge operations of old audited data.
+
+*/
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[AUDIT_LOG_DATA](
+	[AUDIT_LOG_DATA_ID] [int] IDENTITY(1,1) NOT NULL,
+	[AUDIT_LOG_TRANSACTION_ID] [int] NOT NULL,
+	[PRIMARY_KEY_DATA] [varchar](250) NULL,
+	[COL_NAME] [varchar](50) NULL,
+	[OLD_VALUE_LONG] [varchar](max) NULL,
+	[NEW_VALUE_LONG] [varchar](max) NULL,
+	[NEW_VALUE_BLOB] [image] NULL,
+	[DATA_TYPE] [char](1) NOT NULL DEFAULT ('A'),
+	[KEY1] [int] NULL,
+	[KEY2] [int] NULL,
+	[KEY3] [nvarchar](500) NULL,
+	[KEY4] [nvarchar](500) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[AUDIT_LOG_DATA_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+
+CREATE TABLE [dbo].[AUDIT_LOG_TRANSACTIONS](
+	[AUDIT_LOG_TRANSACTION_ID] [int] IDENTITY(1,1) NOT NULL,
+	[DATABASE] [varchar](50) NULL CONSTRAINT [DF_AUDIT_LOG_TRANSACTIONS_Database]  DEFAULT (db_name()),
+	[TABLE_NAME] [varchar](50) NULL,
+	[TABLE_SCHEMA] [varchar](20) NULL,
+	[AUDIT_ACTION_ID] [tinyint] NOT NULL,
+	[HOST_NAME] [varchar](128) NOT NULL,
+	[APP_NAME] [varchar](128) NOT NULL,
+	[MODIFIED_BY] [varchar](128) NOT NULL,
+	[MODIFIED_DATE] [datetime] NOT NULL,
+	[AFFECTED_ROWS] [int] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[AUDIT_LOG_TRANSACTION_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+ALTER TABLE [dbo].[AUDIT_LOG_DATA]  WITH CHECK ADD  CONSTRAINT [FK_AUDIT_LOG_TRANSACTION_ID] FOREIGN KEY([AUDIT_LOG_TRANSACTION_ID])
+REFERENCES [dbo].[AUDIT_LOG_TRANSACTIONS] ([AUDIT_LOG_TRANSACTION_ID])
+ON DELETE CASCADE
+GO
+
+ALTER TABLE [dbo].[AUDIT_LOG_DATA] CHECK CONSTRAINT [FK_AUDIT_LOG_TRANSACTION_ID]
+GO
+
+
