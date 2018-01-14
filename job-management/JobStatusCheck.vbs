@@ -1,3 +1,8 @@
+'Remarks:
+'Use this script to monitor job executions. In case of a job failure, a window will pop up with a warning.
+'I created this to monitor job executions on testing and/or development environments. When an alert popped up on my screen, I knew I had to do something about the failing job.
+'There are better monitoring solutions out there, but since I had to create something fast and given my database permissions and privileges, I decided to create this simple solution
+
 Const adOpenStatic = 3
 Const adLockOptimistic = 3
 
