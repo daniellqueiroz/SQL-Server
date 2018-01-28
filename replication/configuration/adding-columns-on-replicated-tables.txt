@@ -1,0 +1,88 @@
+
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'corp_pontofrio_outros')
+exec sp_changepublication @publication = 'corp_pontofrio_outros', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'corp_extra_outros')
+exec sp_changepublication @publication = 'corp_extra_outros', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'corp_casasbahia_outros')
+exec sp_changepublication @publication = 'corp_casasbahia_outros', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'corp_hp')
+exec sp_changepublication @publication = 'corp_hp', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'corp_barateiro_outros')
+exec sp_changepublication @publication = 'corp_barateiro_outros', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'corp_projeto_outros')
+exec sp_changepublication @publication = 'corp_projeto_outros', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'corp_b2b_outros')
+exec sp_changepublication @publication = 'corp_b2b_outros', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'MarketPlace_CORP')
+exec sp_changepublication @publication = 'MarketPlace_CORP', @property = 'replicate_ddl', @value = '0', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'MarketPlace_Extra')
+exec sp_changepublication @publication = 'MarketPlace_Extra', @property = 'replicate_ddl', @value = '0', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'MarketPlace_CasasBahia')
+exec sp_changepublication @publication = 'MarketPlace_CasasBahia', @property = 'replicate_ddl', @value = '0', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'MarketPlace_PontoFrio')
+exec sp_changepublication @publication = 'MarketPlace_PontoFrio', @property = 'replicate_ddl', @value = '0', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'pontofrio_vitrine')
+exec sp_changepublication @publication = 'pontofrio_vitrine', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'casasbahia_vitrine')
+exec sp_changepublication @publication = 'casasbahia_vitrine', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF OBJECT_ID('dbo.syspublications') IS NOT NULL
+BEGIN
+IF EXISTS(SELECT * FROM dbo.syspublications WHERE name = 'extra_vitrine')
+exec sp_changepublication @publication = 'extra_vitrine', @property = 'replicate_ddl', @value = '1', @force_invalidate_snapshot = 0, @force_reinit_subscription = 0
+END
+
+IF NOT EXISTS (SELECT * FROM SYS.columns WHERE NAME = 'MetaTagDescription' AND object_id=object_id('produto'))
+	ALTER TABLE produto ADD MetaTagDescription VARCHAR(200)
