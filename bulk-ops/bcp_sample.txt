@@ -1,0 +1,2 @@
+-- BCPArgs:1000:[dbo].[Cliente] in "c:\SQLAzureMW\BCPData\dbo.Cliente.dat" -E -n -C RAW -b 1000 -a 4096
+GO

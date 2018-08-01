@@ -1,0 +1,1 @@
+tablediff.exe is a simple application that will try to compare data between two tables of the same schema. It will try to generate the synchronization scripts in the process. In this folder there are some usage sample scripts.

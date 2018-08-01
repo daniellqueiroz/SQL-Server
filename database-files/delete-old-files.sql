@@ -1,0 +1,1 @@
+EXECUTE master.dbo.xp_delete_file 0,N'E:\DB_Backups',N'bak',N'2018-04-10T12:42:34',1

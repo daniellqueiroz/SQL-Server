@@ -1,0 +1,48 @@
+DECLARE @startDate datetime, @endDate datetime;
+SET @startDate = {d N’1980-01-01′};
+SET @endDate = {d N’2013-12-31′};
+with 
+t0(n) as 
+( 
+select 1 
+union all 
+select 1 
+), 
+t1(n) as 
+( 
+select 1 
+from t0 as a
+cross join t0 as b 
+), 
+t2(n) as 
+( 
+select 1 
+from t1 as a
+cross join t1 as b 
+), 
+t3(n) as 
+( 
+select 1 
+from t2 as a
+cross join t2 as b 
+), 
+t4(n) as 
+( 
+select 1 
+from t3 as a
+cross join t3 as b 
+), 
+t5(n) as 
+( 
+select 1 
+from t4 as a
+cross join t4 as b 
+), 
+Numbers(n) as 
+( 
+select row_number() over (order by n) as n 
+from t5 
+)
+select dateadd(d, n – 1, @startDate) as n 
+from Numbers 
+where n <= datediff(d, @startDate, @endDate) + 1

@@ -1,0 +1,3 @@
+sqlcmd -S 10.140.1.17,1191 -U rafael.bahia -P alucard__535 -d db_prd_pontofrio -W -s";" -h-1 -Q "exec sp_ListaTop20" >> "c:\DropBox\Dropbox\Processos\Monitoracao\ADM\ScriptWH\MONITORACAO\MonitoracaoProcessos\resultadoTop20.txt"
+rem sqlcmd -S 10.118.5.5,1170 -U rafael.bahia -P alucard__535 -d db_prd_extra -W -s";" -h-1 -Q "exec sp_ListaTop20" >> "c:\DropBox\Dropbox\Processos\Monitoracao\ADM\ScriptWH\MONITORACAO\MonitoracaoProcessos\resultadoTop20.txt"
+rem sqlcmd -S 10.118.5.8,1180 -U rafael.bahia -P alucard__535 -d db_prd_casasbahia -W -s";" -h-1 -Q "exec sp_ListaTop20" >> "c:\DropBox\Dropbox\Processos\Monitoracao\ADM\ScriptWH\MONITORACAO\MonitoracaoProcessos\resultadoTop20.txt"

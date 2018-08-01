@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<!--[if IE 6]>
+<html id="ie6" lang="en">
+<![endif]-->
+<!--[if IE 7]>
+<html id="ie7" lang="en">
+<![endif]-->
+<!--[if IE 8]>
+<html id="ie8" lang="en">
+<![endif]-->
+<!--[if !(IE 6) | !(IE 7) | !(IE 8)]><!-->
+<html lang="en"><!--<![endif]--><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>Tracking down CPU spikes using process explorer and DMVs | ctrl-alt-geek</title>
+<link rel="profile" href="http://gmpg.org/xfn/11">
+<link rel="stylesheet" type="text/css" media="all" href="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/style.css">
+<link rel="pingback" href="http://mattsql.wordpress.com/xmlrpc.php">
+<link rel="alternate" type="application/rss+xml" title="ctrl-alt-geek » Feed" href="http://mattsql.wordpress.com/feed/">
+<link rel="alternate" type="application/rss+xml" title="ctrl-alt-geek » Comments Feed" href="http://mattsql.wordpress.com/comments/feed/">
+<link rel="alternate" type="application/rss+xml" title="ctrl-alt-geek » Tracking down CPU spikes using process explorer and&nbsp;DMVs Comments Feed" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/feed/">
+<script type="text/javascript">
+/* <![CDATA[ */
+function addLoadEvent(func){var oldonload=window.onload;if(typeof window.onload!='function'){window.onload=func;}else{window.onload=function(){oldonload();func();}}}
+/* ]]> */
+</script>
+<link rel="stylesheet" id="all-css-0" href="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a.css" type="text/css" media="all">
+<script type="text/javascript">
+/* <![CDATA[ */
+var LoggedOutFollow = {"invalid_email":"Your subscription did not succeed, please try again with a valid email address."};
+/* ]]> */
+</script>
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a_002.js"></script>
+<link rel="stylesheet" id="all-css-0" href="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/style_002.css" type="text/css" media="all">
+<!--[if lt IE 8]>
+<link rel='stylesheet' id='highlander-comments-ie7-css'  href='http://s2.wp.com/wp-content/mu-plugins/highlander-comments/style-ie7.css?m=1351637563g&#038;ver=20110606' type='text/css' media='all' />
+<![endif]-->
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://mattsql.wordpress.com/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://s1.wp.com/wp-includes/wlwmanifest.xml"> 
+<link rel="prev" title="The full text error and why I was happy to see&nbsp;it." href="http://mattsql.wordpress.com/2014/10/07/the-full-text-error-and-why-i-was-happy-to-see-it/">
+<link rel="next" title="Another great reason to enable remote admin&nbsp;connections" href="http://mattsql.wordpress.com/2014/11/06/another-great-reason-to-enable-remote-admin-connections/">
+<meta name="generator" content="WordPress.com">
+<link rel="canonical" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/">
+<link rel="shortlink" href="http://wp.me/p1M9aN-90">
+<link rel="alternate" type="application/json+oembed" href="https://public-api.wordpress.com/oembed/1.0/?format=json&amp;url=http%3A%2F%2Fmattsql.wordpress.com%2F2014%2F10%2F15%2Ftracking-down-cpu-spikes-using-process-explorer-and-dmvs%2F&amp;for=wpcom-auto-discovery"><link rel="alternate" type="application/xml+oembed" href="https://public-api.wordpress.com/oembed/1.0/?format=xml&amp;url=http%3A%2F%2Fmattsql.wordpress.com%2F2014%2F10%2F15%2Ftracking-down-cpu-spikes-using-process-explorer-and-dmvs%2F&amp;for=wpcom-auto-discovery">
+<!-- Jetpack Open Graph Tags -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tracking down CPU spikes using process explorer and DMVs">
+<meta property="og:url" content="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/">
+<meta property="og:description" content="What is it about 4:45 pm on a Friday afternoon that makes CPUs spike, drives crash, databases corrupt? I wish I knew but I don't. I do know that I have been on the receiving end a few times. Just s...">
+<meta property="article:published_time" content="2014-10-15T09:20:06+00:00">
+<meta property="article:modified_time" content="2014-10-15T09:20:06+00:00">
+<meta property="article:author" content="http://mattsql.wordpress.com/author/mattsql/">
+<meta property="og:site_name" content="ctrl-alt-geek">
+<meta property="og:image" content="https://mattsql.files.wordpress.com/2014/10/procexp1.jpg">
+<meta property="og:image" content="https://mattsql.files.wordpress.com/2014/10/procexp2.jpg">
+<meta property="og:image" content="https://mattsql.files.wordpress.com/2014/10/procexp3.jpg">
+<meta name="twitter:site" content="@wordpressdotcom">
+<meta name="twitter:image" content="https://mattsql.files.wordpress.com/2014/10/procexp1.jpg?w=240">
+<meta name="twitter:card" content="summary">
+<meta property="fb:app_id" content="249643311490">
+<meta property="article:publisher" content="https://www.facebook.com/WordPresscom">
+<link rel="shortcut icon" type="image/x-icon" href="http://s2.wp.com/i/favicon.ico?m=1405977958g" sizes="16x16 24x24 32x32 48x48">
+<link rel="icon" type="image/x-icon" href="http://s2.wp.com/i/favicon.ico?m=1405977958g" sizes="16x16 24x24 32x32 48x48">
+<link rel="apple-touch-icon-precomposed" href="http://s0.wp.com/i/webclip.png?m=1391188133g">
+<link rel="openid.server" href="http://mattsql.wordpress.com/?openidserver=1">
+<link rel="openid.delegate" href="http://mattsql.wordpress.com/">
+<link rel="search" type="application/opensearchdescription+xml" href="http://mattsql.wordpress.com/osd.xml" title="ctrl-alt-geek">
+<link rel="search" type="application/opensearchdescription+xml" href="http://wordpress.com/opensearch.xml" title="WordPress.com">
+<meta name="application-name" content="ctrl-alt-geek"><meta name="msapplication-window" content="width=device-width;height=device-height"><meta name="msapplication-tooltip" content="Information is that which surprises us"><meta name="msapplication-task" content="name=Subscribe;action-uri=http://mattsql.wordpress.com/feed/;icon-uri=http://s2.wp.com/i/favicon.ico"><meta name="msapplication-task" content="name=Sign up for a free blog;action-uri=http://wordpress.com/signup/;icon-uri=http://s2.wp.com/i/favicon.ico"><meta name="msapplication-task" content="name=WordPress.com Support;action-uri=http://support.wordpress.com/;icon-uri=http://s2.wp.com/i/favicon.ico"><meta name="msapplication-task" content="name=WordPress.com Forums;action-uri=http://forums.wordpress.com/;icon-uri=http://s2.wp.com/i/favicon.ico"><meta name="title" content="Tracking down CPU spikes using process explorer and&nbsp;DMVs | ctrl-alt-geek on WordPress.com">
+<meta name="description" content="What is it about 4:45 pm on a Friday afternoon that makes CPUs spike, drives crash, databases corrupt? I wish I knew but I don't. I do know that I have been on the receiving end a few times. Just shutting down the last applications when a call or a page comes in. Next minute…">
+
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/google_service.js">
+</script>
+<script type="text/javascript">
+if ( typeof GS_googleAddAdSenseService == 'function' ) { GS_googleAddAdSenseService("ca-pub-3443918307802676"); }
+if ( typeof GS_googleEnableAllServices == 'function' ) { GS_googleEnableAllServices() };
+</script><script src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/google_ads.js"></script>
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/amzn_ads.js"></script>
+<script type="text/javascript">
+try { amznads.getAds("3033","300x250"); } catch(e) { /* ignore */ }
+</script><script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/bid"></script>
+<script type="text/javascript">
+var amznKeys = amznads.getKeys();
+if (typeof amznKeys != "undefined" && amznKeys != "") { for (var i =0; i < amznKeys.length; i++) { var key = amznKeys[i]; GA_googleAddAttr("amzn", key);} }
+document.close();
+</script>
+<script type="text/javascript">
+if ( typeof GA_googleAddSlot == 'function' ) { GA_googleAddSlot("ca-pub-3443918307802676", "wpcom_below_post"); }
+</script>
+<script type="text/javascript">
+if ( typeof GA_googleFetchAds == 'function' ) { GA_googleFetchAds(); }
+</script>
+
+<script type="text/javascript">
+var wpcom_ads = { bid: 26251345, pt: 'permalink', wa: 0, as: 0, domain: 'mattsql.wordpress.com', url: 'http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/', gid: '', };
+</script>
+<style type="text/css" id="syntaxhighlighteranchor"></style>
+<script type="text/javascript">
+	window.google_analytics_uacct = "UA-52447-2";
+</script>
+
+<script type="text/javascript">
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-52447-2']);
+	_gaq.push(['_setDomainName', 'wordpress.com']);
+	_gaq.push(['_initData']);
+	_gaq.push(['_trackPageview']);
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ga);
+	})();
+</script><script src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/ga.js" async="" type="text/javascript"></script>
+<script src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/rate.php" charset="utf-8"></script><link rel="stylesheet" type="text/css" id="gravatar-card-css" href="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/hovercard.css"><link rel="stylesheet" type="text/css" id="gravatar-card-services-css" href="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/services.css"><style id="pd_popup_holder_style_5547600_post_558" type="text/css">#pd_popup_holder_5547600_post_558 { position:absolute; display:none; width:350px; height:auto; top:0px; left:0px; z-index:10000; border:solid 1px #CCC; background-color:white; padding:0px 15px;font-family:Arial,Sans;box-shadow: -10px 10px 20px rgba(0, 0, 0, .5);-webkit-box-shadow: 0px 0px 6px rgba(0, 0, 0, .25);-moz-box-shadow: 0px 0px 6px rgba(0, 0, 0, .25); }</style><script src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a" async="" type="text/javascript"></script></head>
+
+<body class="single single-post postid-558 single-format-standard mp6 single-author highlander-enabled highlander-light">
+<div id="wrapper" class="hfeed">
+	<div id="header">
+		<div id="masthead">
+			<div id="branding" role="banner">
+								<div id="site-title">
+					<span>
+						<a sl-processed="1" href="http://mattsql.wordpress.com/" title="ctrl-alt-geek" rel="home">ctrl-alt-geek</a>
+					</span>
+				</div>
+				<div id="site-description">Information is that which surprises us</div>
+
+										<a sl-processed="1" class="home-link" href="http://mattsql.wordpress.com/" title="ctrl-alt-geek" rel="home">
+							<img src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/cherryblossoms.jpg" alt="" height="198" width="940">
+						</a>
+								</div><!-- #branding -->
+
+			<div id="access" role="navigation">
+			  				<div class="skip-link screen-reader-text"><a sl-processed="1" href="#content" title="Skip to content">Skip to content</a></div>
+								<div class="menu"><ul><li><a sl-processed="1" href="http://mattsql.wordpress.com/">Home</a></li><li class="page_item page-item-2"><a sl-processed="1" href="http://mattsql.wordpress.com/about/">About</a></li></ul></div>
+			</div><!-- #access -->
+		</div><!-- #masthead -->
+	</div><!-- #header -->
+
+	<div id="main">
+
+		<div id="container">
+			<div id="content" role="main">
+
+			
+
+				<div id="nav-above" class="navigation">
+					<div class="nav-previous"><a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/07/the-full-text-error-and-why-i-was-happy-to-see-it/" rel="prev"><span class="meta-nav">←</span> The full text error and why I was happy to see&nbsp;it.</a></div>
+					<div class="nav-next"><a sl-processed="1" href="http://mattsql.wordpress.com/2014/11/06/another-great-reason-to-enable-remote-admin-connections/" rel="next">Another great reason to enable remote admin&nbsp;connections <span class="meta-nav">→</span></a></div>
+				</div><!-- #nav-above -->
+
+				<div id="post-558" class="post-558 post type-post status-publish format-standard hentry category-service-broker category-sql-server tag-cpu tag-cpu-usage tag-process-explorer tag-production-server">
+											<h2 class="entry-title"><a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" rel="bookmark">Tracking down CPU spikes using process explorer and&nbsp;DMVs</a></h2>					
+					<div class="entry-meta">
+													<span class="meta-prep meta-prep-author">Posted on</span> <a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" title="9:20 am" rel="bookmark"><span class="entry-date">October 15, 2014</span></a>							<span class="by-author"><span class="sep">by</span> <span class="author vcard"><a sl-processed="1" class="url fn n" href="http://mattsql.wordpress.com/author/mattsql/" title="View all posts by matt.bowler" rel="author">matt.bowler</a></span> </span>											</div><!-- .entry-meta -->
+
+					<div class="entry-content">
+						<p>What is it about 4:45 pm on a Friday afternoon that makes CPUs 
+spike, drives crash, databases corrupt? I wish I knew but I don’t. I do 
+know that I have been on the receiving end a few times. Just shutting 
+down the last applications when a call or a page comes in. Next minute 
+you’re phoning home and dinner’s in the warmer.</p>
+<p>On one such&nbsp;Friday afternoon, in the not too distant past, one 
+of the DBA team noticed that CPU was running hot on our main production 
+server. I could see from looking at task manager on the server that the 
+SQL process was responsible for the CPU usage. But this is a busy OLTP 
+production server and I needed to isolate the process or processes 
+responsible. Looking at sys.sysprocesses it wasn’t immediately obvious 
+what session could be responsible.</p>
+<p>Next step was to run process explorer on the server to narrow down 
+which CPU’s were spiking. If you haven’t already discovered it, process 
+explorer is a great free lightweight diagnostic tool from the sys 
+internals team. The executable can be downloaded and run without any 
+installation.</p>
+<p><a sl-processed="1" href="http://technet.microsoft.com/en-us/sysinternals/bb896653.aspx" rel="nofollow">http://technet.microsoft.com/en-us/sysinternals/bb896653.aspx</a></p>
+<p>Open process explorer and click on one of the small graphs near the top to get a detailed view.</p>
+<p><a sl-processed="1" href="https://mattsql.files.wordpress.com/2014/10/procexp1.jpg"><img class="alignnone size-full wp-image-561" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/procexp1.jpg" alt="procexp1" height="340" width="640"></a></p>
+<p>&nbsp;</p>
+<p>Tick&nbsp;the “Show one graph per CPU” option.</p>
+<p><a sl-processed="1" href="https://mattsql.files.wordpress.com/2014/10/procexp2.jpg"><img class="alignnone size-full wp-image-562" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/procexp2.jpg" alt="procexp2" height="426" width="640"></a></p>
+<p>&nbsp;</p>
+<p>Hovering over the individual graphs will give the CPU id.</p>
+<p><a sl-processed="1" href="https://mattsql.files.wordpress.com/2014/10/procexp3.jpg"><img class="alignnone size-full wp-image-563" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/procexp3.jpg" alt="procexp3" height="429" width="640"></a></p>
+<p><em>Note: The screenshots above are not from the actual issue. At the
+ time I was too busy trying to fix the problem to&nbsp;take screenshots 
+for later use <span class="wp-smiley wp-emoji wp-emoji-smile" title=":)">:)</span></em></p>
+<p>Using process explorer this way I found that CPU usage was jumping up
+ and down but there were two CPUs that were sitting at 100% 
+consistently. Armed with the ids I hit SQL Server and some DMVs.</p>
+<p>Using sys.dm_os_schedulers with the ids of the two rogue CPUs gave me the scheduler addresses.</p>
+<pre>select scheduler_address from sys.dm_os_schedulers
+where cpu_id in 
+	([id1],[id2])
+</pre>
+<p>Putting the scheduler addresses into sys.dm_os_workers gave me task addresses.</p>
+<pre>select task_address from sys.dm_os_workers 
+where scheduler_address in 
+	([scheduler_address_1]
+	,[scheduler_address_2])
+
+</pre>
+<p>And finally putting the task addresses into sys.dm_os_tasks gave me the session ids.</p>
+<pre>select session_id from sys.dm_os_tasks 
+where task_address in 
+	([task_address_1]
+	,[task_address_2])
+</pre>
+<p>Or if you want to put it all together you get something like.</p>
+<pre>select
+	s.cpu_id,
+	w.[state],
+	t.session_id 
+from sys.dm_os_schedulers s
+left join sys.dm_os_workers w
+	on s.scheduler_address = w.scheduler_address
+left join sys.dm_os_tasks t
+	on w.task_address = t.task_address
+where s.cpu_id in ([id1],[id2],...)
+and w.[state] = 'RUNNING'
+</pre>
+<p>There’s a bunch of other columns that you might be interested in from these DMVs – but in my case I just wanted the session ids.</p>
+<p>From there I could go&nbsp;back to&nbsp;sys.sysprocesses and&nbsp;see
+ that in this case it was a system service broker process that was 
+pegging the CPU. Restarting the service broker queue cleared the issue 
+instantly.</p>
+<pre>ALTER QUEUE [my_queue]
+WITH STATUS=OFF
+ 
+ALTER QUEUE [my_queue]
+WITH STATUS=ON
+</pre>
+
+<div class="wpcnt">
+<div class="wpa">
+<a sl-processed="1" class="wpa-about" href="http://wordpress.com/about-these-ads/" rel="nofollow">About these ads</a>
+<script type="text/javascript">
+		var wpcom_adclk_hovering = false;
+		var wpcom_adclk_recorded = false;
+		var wpcom_adclk_theme = "Twenty Ten";
+		var wpcom_adclk_slot = "wpcom_below_post";
+		var wpcom_adclk_network = ( typeof wpcom_adclk_network === "undefined" ) ? "" : wpcom_adclk_network ;
+
+		jQuery(document).ready( function() {
+			function wpcom_adclk_hover_yes() { wpcom_adclk_hovering = true; }
+			function wpcom_adclk_hover_no() { wpcom_adclk_hovering = false; }
+			jQuery(".wpa").click(wpcom_adclk_click);
+			jQuery(".wpa iframe").hover( wpcom_adclk_hover_yes, wpcom_adclk_hover_no );
+			jQuery(".wpa object").hover( wpcom_adclk_hover_yes, wpcom_adclk_hover_no );
+
+			jQuery(window).blur( function() {
+				if ( wpcom_adclk_hovering ) { wpcom_adclk_click(); }
+			});
+		});
+
+		function wpcom_adclk_impression() {
+			var stat_gif = document.location.protocol + "//pixel.wp.com/g.gif?v=wpcom-no-pv";
+			stat_gif += "&x_ads_imp_theme=" + wpcom_adclk_theme;
+			stat_gif += "&x_ads_imp_placement="+wpcom_adclk_slot;
+			stat_gif += "&x_ads_imp_network=" + wpcom_adclk_network;
+			stat_gif += "&x_ads_imp_theme_network="+wpcom_adclk_theme+"_"+wpcom_adclk_network;
+			new Image().src = stat_gif + "&baba=" + Math.random();
+			return true;
+		}
+
+		function wpcom_adclk_click() {
+			if (wpcom_adclk_recorded) { return true; } // no double counting
+			var stat_gif = document.location.protocol + "//pixel.wp.com/g.gif?v=wpcom-no-pv";
+			stat_gif += "&x_ads_click_theme=" + wpcom_adclk_theme;
+			stat_gif += "&x_ads_click_placement="+wpcom_adclk_slot;
+			stat_gif += "&x_ads_click_network=" + wpcom_adclk_network;
+			stat_gif += "&x_ads_click_theme_network="+wpcom_adclk_theme+"_"+wpcom_adclk_network;
+
+			new Image().src = stat_gif + "&baba=" + Math.random();
+			wpcom_adclk_recorded = true;
+			var now=new Date(); var end=now.getTime()+250;
+			while(true){now=new Date();if(now.getTime()>end){break;}}
+			return true;
+		}
+	
+if ( typeof GA_googleAddAttr == 'function' ) {
+GA_googleAddAttr("AdOpt", "1");
+GA_googleAddAttr("Origin", "other");
+GA_googleAddAttr("LangId", "1");
+GA_googleAddAttr("Domain", "mattsql.wordpress.com");
+GA_googleAddAttr("BlogId", "26251345");
+GA_googleAddAttr("PageURL", "http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/");
+GA_googleAddAttr("Autotag", "technology");
+GA_googleAddAttr("Autotag", "gadgets");
+GA_googleAddAttr("Tag", "service-broker");
+GA_googleAddAttr("Tag", "sql-server");
+GA_googleAddAttr("Tag", "cpu");
+GA_googleAddAttr("Tag", "cpu-usage");
+GA_googleAddAttr("Tag", "process-explorer");
+GA_googleAddAttr("Tag", "production-server");
+GA_googleAddAttr("theme_bg", "ffffff");
+GA_googleAddAttr("theme_text", "333333");
+GA_googleAddAttr("theme_link", "0066cc");
+GA_googleAddAttr("theme_border", "cccccc");
+GA_googleAddAttr("theme_url", "ff4b33");
+GA_googleAddAdSensePageAttr("google_page_url", "http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/");
+GA_googleFillSlot("wpcom_below_post");
+}
+</script><script src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/ads.htm"></script>
+</div>
+</div>
+
+<script type="text/javascript">
+jQuery( window ).load( function() {
+    if ( jQuery(".wpa script[src*='virool.com']").length > 0 || jQuery(".wpa script[src*='shareth.ru']").length > 0 || jQuery(".wpa iframe[src*='boomvideo.tv']").length > 0 || jQuery(".wpa iframe[src*='viewablemedia.net']").length > 0 || jQuery(".wpa .sharethrough-placement").length > 0 ) {
+        jQuery( '.wpa' ).css( 'width', '400px' );
+    }
+setTimeout(function(){if(typeof GS_googleAddAdSenseService !== 'function'){new Image().src=document.location.protocol+"//pixel.wp.com/g.gif?v=wpcom-no-pv&x_noads=adblock&baba="+Math.random()}},100);
+} );
+</script>
+
+<div id="jp-post-flair" class="sharedaddy sd-rating-enabled sd-like-enabled sd-sharing-enabled"><div class="sd-block sd-rating"><h3 class="sd-title">Rate this:</h3><div style="display: inline-block;" class="pd-rating" id="pd_rating_holder_5547600_post_558"><div class="rating-icons" id="pd_rate_5547600_post_558" style="float:left;"><div class="rating-star-icon" onmouseout="PDRTJS_5547600_post_558.rebuild();" onclick="PDRTJS_5547600_post_558.rate(1);" onmouseover="PDRTJS_5547600_post_558.hover(1);" id="PDRTJS_5547600_post_558_stars_1" style="background-size: 32px 48px !important; cursor: pointer; width: 16px; height: 16px; line-height: 16px; background: url(http://i0.poll.fm/images/ratings/star-yellow-sml.png) bottom left; float: left; padding: 0px; margin: 0px; margin-right: 1px;">&nbsp;</div><div class="rating-star-icon" onmouseout="PDRTJS_5547600_post_558.rebuild();" onclick="PDRTJS_5547600_post_558.rate(2);" onmouseover="PDRTJS_5547600_post_558.hover(2);" id="PDRTJS_5547600_post_558_stars_2" style="background-size: 32px 48px !important; cursor: pointer; width: 16px; height: 16px; line-height: 16px; background: url(http://i0.poll.fm/images/ratings/star-yellow-sml.png) bottom left; float: left; padding: 0px; margin: 0px; margin-right: 1px;">&nbsp;</div><div class="rating-star-icon" onmouseout="PDRTJS_5547600_post_558.rebuild();" onclick="PDRTJS_5547600_post_558.rate(3);" onmouseover="PDRTJS_5547600_post_558.hover(3);" id="PDRTJS_5547600_post_558_stars_3" style="background-size: 32px 48px !important; cursor: pointer; width: 16px; height: 16px; line-height: 16px; background: url(http://i0.poll.fm/images/ratings/star-yellow-sml.png) bottom left; float: left; padding: 0px; margin: 0px; margin-right: 1px;">&nbsp;</div><div class="rating-star-icon" onmouseout="PDRTJS_5547600_post_558.rebuild();" onclick="PDRTJS_5547600_post_558.rate(4);" onmouseover="PDRTJS_5547600_post_558.hover(4);" id="PDRTJS_5547600_post_558_stars_4" style="background-size: 32px 48px !important; cursor: pointer; width: 16px; height: 16px; line-height: 16px; background: url(http://i0.poll.fm/images/ratings/star-yellow-sml.png) bottom left; float: left; padding: 0px; margin: 0px; margin-right: 1px;">&nbsp;</div><div class="rating-star-icon" onmouseout="PDRTJS_5547600_post_558.rebuild();" onclick="PDRTJS_5547600_post_558.rate(5);" onmouseover="PDRTJS_5547600_post_558.hover(5);" id="PDRTJS_5547600_post_558_stars_5" style="background-size: 32px 48px !important; cursor: pointer; width: 16px; height: 16px; line-height: 16px; background: url(http://i0.poll.fm/images/ratings/star-yellow-sml.png) bottom left; float: left; padding: 0px; margin: 0px; margin-right: 1px;">&nbsp;</div></div><span style="float:left;">&nbsp;</span><div id="rating_info_5547600_post_558" style="display:block;float:left;background:url(http://i0.poll.fm/images/ratings/info.png) no-repeat 3px 2px;width:16px;height:16px;cursor:pointer; null " onclick="javascript:PDRTJS_5547600_post_558.togglePopup();return false;"><span style="display:none;">i</span></div><div class="pd_popup_holder" id="pd_popup_holder_5547600_post_558">&nbsp;</div><div class="rating-msg" id="PDRTJS_5547600_post_558_msg" style="float:left; padding-left: 5px; text-align: left; font:normal normal /16px ; color: #;">Rate This</div><p style="padding: 0px; margin: 0px; clear: both;"></p></div></div><div class="sharedaddy sd-sharing-enabled"><div class="robots-nocontent sd-block sd-social sd-social-icon-text sd-sharing"><h3 class="sd-title">Share this:</h3><div class="sd-content"><ul><li class="share-linkedin"><a sl-processed="1" rel="nofollow" class="share-linkedin sd-button share-icon" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/?share=linkedin&amp;nb=1" title="Click to share on LinkedIn" id="sharing-linkedin-558"><span>LinkedIn<span class="share-count">7</span></span></a></li><li class="share-google-plus-1"><a sl-processed="1" rel="nofollow" class="share-google-plus-1 sd-button share-icon" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/?share=google-plus-1&amp;nb=1" title="Click to share on Google+" id="sharing-google-558"><span>Google</span></a></li><li class="share-email share-service-visible"><a sl-processed="1" rel="nofollow" class="share-email sd-button share-icon" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/?share=email&amp;nb=1" title="Click to email this to a friend"><span>Email</span></a></li><li class="share-print"><a sl-processed="1" rel="nofollow" class="share-print sd-button share-icon" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/#print" title="Click to print"><span>Print</span></a></li><li class="share-end"></li></ul></div></div></div><div class="sharedaddy sd-block sd-like jetpack-likes-widget-wrapper jetpack-likes-widget-loaded" id="like-post-wrapper-26251345-558-546373aaab178" data-src="//widgets.wp.com/likes/#blog_id=26251345&amp;post_id=558&amp;origin=mattsql.wordpress.com&amp;obj_id=26251345-558-546373aaab178" data-name="like-post-frame-26251345-558-546373aaab178"><h3 class="sd-title">Like this:</h3><div class="likes-widget-placeholder post-likes-widget-placeholder" style="height: 55px; display: none;"><span class="button"><span>Like</span></span> <span class="loading">Loading...</span></div><iframe class="post-likes-widget jetpack-likes-widget" name="like-post-frame-26251345-558-546373aaab178" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a.htm" frameborder="0" height="55px" width="100%"></iframe><span class="sd-text-color"></span><a class="sd-link-color"></a></div>
+<div style="display: block;" id="jp-relatedposts" class="jp-relatedposts">
+	<h3 class="jp-relatedposts-headline"><em>Related</em></h3>
+<div class="jp-relatedposts-items jp-relatedposts-items-minimal"><p class="jp-relatedposts-post jp-relatedposts-post0" data-post-id="241" data-post-format="false"><span class="jp-relatedposts-post-title"><a sl-processed="1" data-position="0" data-origin="558" rel="nofollow" title="SQL Server 2005 backups in a hung state because of full text search process
+
+I came across an issue today where a backup process was in a blocked state with a wait type of MSSEARCH. The issue boiled down to an issue with communication/contention&amp;hellip;" href="http://mattsql.wordpress.com/2012/04/24/sql-server-2005-backups-in-a-hung-state-because-of-full-text-search-process/" class="jp-relatedposts-post-a">SQL Server 2005 backups in a hung state because of full text search process</a></span><span class="jp-relatedposts-post-context">In "Database options"</span></p><p class="jp-relatedposts-post jp-relatedposts-post1" data-post-id="544" data-post-format="false"><span class="jp-relatedposts-post-title"><a sl-processed="1" data-position="1" data-origin="558" rel="nofollow" title="Migrating SQL Server logins
+
+Once upon a migration I would use sp_help_revlogin to migrate logins and remap the SQL server logins using sp_change_users_login. During some recent migration work I realised that SQL Server Management&amp;hellip;" href="http://mattsql.wordpress.com/2014/05/07/migrating-sql-server-logins/" class="jp-relatedposts-post-a">Migrating SQL Server logins</a></span><span class="jp-relatedposts-post-context">In "Security"</span></p><p class="jp-relatedposts-post jp-relatedposts-post2" data-post-id="489" data-post-format="false"><span class="jp-relatedposts-post-title"><a sl-processed="1" data-position="2" data-origin="558" rel="nofollow" title="My Favourite SSMS productivity tips
+
+It's a well known fact that any sitcom that runs for a certain length of time will release a clip show. Similarly any blog about SQL Server will end up&amp;hellip;" href="http://mattsql.wordpress.com/2014/01/13/my-favourite-ssms-productivity-tips/" class="jp-relatedposts-post-a">My Favourite SSMS productivity tips</a></span><span class="jp-relatedposts-post-context">In "SQL Server"</span></p></div></div></div>											</div><!-- .entry-content -->
+
+
+					<div class="entry-utility">
+												This entry was posted in <a sl-processed="1" href="http://mattsql.wordpress.com/category/service-broker/" rel="category tag">Service Broker</a>, <a sl-processed="1" href="http://mattsql.wordpress.com/category/sql-server/" rel="category tag">SQL Server</a> and tagged <a sl-processed="1" href="http://mattsql.wordpress.com/tag/cpu/" rel="tag">CPU</a>, <a sl-processed="1" href="http://mattsql.wordpress.com/tag/cpu-usage/" rel="tag">CPU usage</a>, <a sl-processed="1" href="http://mattsql.wordpress.com/tag/process-explorer/" rel="tag">process explorer</a>, <a sl-processed="1" href="http://mattsql.wordpress.com/tag/production-server/" rel="tag">production server</a>. Bookmark the <a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" title="Permalink to Tracking down CPU spikes using process explorer and&nbsp;DMVs" rel="bookmark">permalink</a>.											</div><!-- .entry-utility -->
+				</div><!-- #post-## -->
+
+				<div id="nav-below" class="navigation">
+					<div class="nav-previous"><a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/07/the-full-text-error-and-why-i-was-happy-to-see-it/" rel="prev"><span class="meta-nav">←</span> The full text error and why I was happy to see&nbsp;it.</a></div>
+					<div class="nav-next"><a sl-processed="1" href="http://mattsql.wordpress.com/2014/11/06/another-great-reason-to-enable-remote-admin-connections/" rel="next">Another great reason to enable remote admin&nbsp;connections <span class="meta-nav">→</span></a></div>
+				</div><!-- #nav-below -->
+
+				
+			<div id="comments">
+
+
+			<h3 id="comments-title">2 Responses to <em>Tracking down CPU spikes using process explorer and&nbsp;DMVs</em></h3>
+
+
+			<ol class="commentlist">
+					<li class="post pingback">
+		<p>Pingback: <a sl-processed="1" href="http://www.johnsansom.com/sftw-sql-server-links-171014/" rel="external nofollow" class="url">(SFTW) SQL Server Links 17/10/14 - John Sansom</a></p>
+	</li><!-- #comment-## -->
+	<li class="comment even thread-even depth-1 highlander-comment" id="li-comment-726">
+		<div id="comment-726">
+			<div class="comment-author vcard">
+				<img id="grav-6c8c5bb85505f465b0abf4e549b08fb1-0" alt="" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/6c8c5bb85505f465b0abf4e549b08fb1.png" class="avatar avatar-40 grav-hashed grav-hijack" height="40" width="40">				<cite class="fn"><a sl-processed="1" href="http://gravatar.com/cadarsh88" rel="external nofollow" class="url">cadarsh88sh</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/#comment-726">
+				October 21, 2014 at 9:44 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Nice article!<br>
+I have been having this concern, and my blog(<a sl-processed="1" href="http://cadarsh.blogspot.in/2014/09/capture-sql-processes-and-email-after.html" rel="nofollow">http://cadarsh.blogspot.in/2014/09/capture-sql-processes-and-email-after.html</a>)
+ here is what I came up with. A powershell script to poll CPU usage, and
+ trigger the processes that are vastly consuming CPU in real time. The 
+entire script can be called from an SQL Agent job.</p>
+</div>
+
+			<div class="reply">
+				<a sl-processed="1" class="comment-reply-link" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/?replytocom=726#respond" onclick='return addComment.moveForm( "comment-726", "726", "respond", "558" )' aria-label="Reply to cadarsh88sh">Reply</a>			</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li><!-- #comment-## -->
+			</ol>
+
+
+	
+
+								<div id="respond" class="comment-respond js">
+				<h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a sl-processed="1" rel="nofollow" id="cancel-comment-reply-link" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/#respond" style="display:none;">Cancel reply</a></small></h3>
+									<form action="http://mattsql.wordpress.com/wp-comments-post.php" method="post" id="commentform" class="comment-form">
+																										
+
+
+												<input id="highlander_comment_nonce" name="highlander_comment_nonce" value="acd2b2a0c8" type="hidden"><input name="_wp_http_referer" value="/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" type="hidden">
+<input name="hc_post_as" id="hc_post_as" value="guest" type="hidden">
+
+<div class="comment-form-field comment-textarea">
+	
+	<div id="comment-form-comment"><textarea class="autosizejs " tabindex="-1" style="position: absolute; top: -999px; left: 0px; right: auto; bottom: auto; border: 0px none; padding: 0px; box-sizing: content-box; word-wrap: break-word; height: 0px ! important; min-height: 0px ! important; overflow: hidden; transition: none 0s ease 0s ; font-family: Arial,Helvetica,Tahoma,Verdana,sans-serif; font-size: 14px; font-weight: 400; font-style: normal; letter-spacing: 0px; text-transform: none; text-decoration: none; word-spacing: 0px; text-indent: 0px; line-height: 24px; width: 618px;">Enter your comment here...</textarea><textarea style="height: 44px; overflow: hidden; word-wrap: break-word; resize: none;" placeholder="Enter your comment here..." id="comment" name="comment" title="Enter your comment here..."></textarea></div>
+</div>
+
+<div style="display: none;" id="comment-form-identity">
+
+	<div id="comment-form-nascar">
+		<p>Fill in your details below or click an icon to log in:</p>
+		<ul>
+			<li class="selected" style="display:none;">
+				<a sl-processed="1" href="#comment-form-guest" id="postas-guest" title="Guest">
+					<span></span>
+				</a>
+			</li>
+			<li>
+				<a sl-processed="1" href="#comment-form-load-service:WordPress.com" id="postas-wordpress" title="WordPress.com">
+					<span></span>
+				</a>
+			</li>
+			<li>
+				<a sl-processed="1" href="#comment-form-load-service:Twitter" id="postas-twitter" title="Twitter">
+					<span></span>
+				</a>
+			</li>
+			<li>
+				<a sl-processed="1" href="#comment-form-load-service:Facebook" id="postas-facebook" title="Facebook">
+					<span></span>
+				</a>
+			</li>
+			<li>
+			<iframe id="googleplus-sign-in" name="googleplus-sign-in" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a_002.htm" scrolling="no" allowtransparency="true" seamless="seamless" frameborder="0" height="24" width="24"></iframe>
+			</li>
+		</ul>
+	</div>
+
+	<div id="comment-form-guest" class="comment-form-service selected">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+<a sl-processed="1" href="https://gravatar.com/site/signup/" target="_blank">				<img src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/ad516503a11cd5ca435acc9bb6523536.png" alt="Gravatar" class="no-grav" width="25">
+</a>			</div>
+
+				<div class="comment-form-fields">
+				<div class="comment-form-field comment-form-email">
+					<label for="email">Email <span class="required">(required)</span> <span class="nopublish">(Address never made public)</span></label>
+					<div class="comment-form-input"><input id="email" name="email" type="email"></div>
+				</div>
+				<div class="comment-form-field comment-form-author">
+					<label for="author">Name <span class="required">(required)</span></label>
+					<div class="comment-form-input"><input id="author" name="author" type="text"></div>
+				</div>
+				<div class="comment-form-field comment-form-url">
+					<label for="url">Website</label>
+					<div class="comment-form-input"><input id="url" name="url" type="text"></div>
+				</div>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-wordpress" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/wplogo.png" alt="WordPress.com Logo" class="no-grav" width="25">
+			</div>
+
+				<div class="comment-form-fields">
+				<input name="wp_avatar" id="wordpress-avatar" class="comment-meta-wordpress" value="" type="hidden">
+				<input name="wp_user_id" id="wordpress-user_id" class="comment-meta-wordpress" value="" type="hidden">
+				<input name="wp_access_token" id="wordpress-access_token" class="comment-meta-wordpress" value="" type="hidden">
+				<p class="comment-form-posting-as pa-wordpress"><strong></strong> You are commenting using your <span class="skimlinks-unlinked">WordPress.com</span> account. <span class="comment-form-log-out">(&nbsp;<a sl-processed="1" href="javascript:HighlanderComments.doExternalLogout(%20'wordpress'%20);">Log&nbsp;Out</a>&nbsp;/&nbsp;<a sl-processed="1" href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-twitter" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/ad516503a11cd5ca435acc9bb6523536.png" alt="Twitter picture" class="no-grav" width="25">
+			</div>
+
+				<div class="comment-form-fields">
+				<input name="twitter_avatar" id="twitter-avatar" class="comment-meta-twitter" value="" type="hidden">
+				<input name="twitter_user_id" id="twitter-user_id" class="comment-meta-twitter" value="" type="hidden">
+				<input name="twitter_access_token" id="twitter-access_token" class="comment-meta-twitter" value="" type="hidden">
+				<p class="comment-form-posting-as pa-twitter"><strong></strong> You are commenting using your Twitter account. <span class="comment-form-log-out">(&nbsp;<a sl-processed="1" href="javascript:HighlanderComments.doExternalLogout(%20'twitter'%20);">Log&nbsp;Out</a>&nbsp;/&nbsp;<a sl-processed="1" href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-facebook" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/ad516503a11cd5ca435acc9bb6523536.png" alt="Facebook photo" class="no-grav" width="25">
+			</div>
+
+				<div class="comment-form-fields">
+				<input name="fb_avatar" id="facebook-avatar" class="comment-meta-facebook" value="" type="hidden">
+				<input name="fb_user_id" id="facebook-user_id" class="comment-meta-facebook" value="" type="hidden">
+				<input name="fb_access_token" id="facebook-access_token" class="comment-meta-facebook" value="" type="hidden">
+				<p class="comment-form-posting-as pa-facebook"><strong></strong> You are commenting using your Facebook account. <span class="comment-form-log-out">(&nbsp;<a sl-processed="1" href="javascript:HighlanderComments.doExternalLogout(%20'facebook'%20);">Log&nbsp;Out</a>&nbsp;/&nbsp;<a sl-processed="1" href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+	<div id="comment-form-googleplus" class="comment-form-service">
+		<div class="comment-form-padder">
+			<div class="comment-form-avatar">
+				<img src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/ad516503a11cd5ca435acc9bb6523536.png" alt="Google+ photo" class="no-grav" width="25">
+			</div>
+
+				<div class="comment-form-fields">
+				<input name="googleplus_avatar" id="googleplus-avatar" class="comment-meta-googleplus" value="" type="hidden">
+				<input name="googleplus_user_id" id="googleplus-user_id" class="comment-meta-googleplus" value="" type="hidden">
+				<input name="googleplus_access_token" id="googleplus-access_token" class="comment-meta-googleplus" value="" type="hidden">
+				<p class="comment-form-posting-as pa-googleplus"><strong></strong> You are commenting using your Google+ account. <span class="comment-form-log-out">(&nbsp;<a sl-processed="1" href="javascript:HighlanderComments.doExternalLogout(%20'googleplus'%20);">Log&nbsp;Out</a>&nbsp;/&nbsp;<a sl-processed="1" href="#" onclick="javascript:HighlanderComments.switchAccount();return false;">Change</a>&nbsp;)</span></p>
+			</div>
+	
+		</div>
+	</div>
+
+
+	<div id="comment-form-load-service" class="comment-form-service">
+		<div class="comment-form-posting-as-cancel"><a sl-processed="1" href="javascript:HighlanderComments.cancelExternalWindow();">Cancel</a></div>
+		<p>Connecting to %s</p>
+	</div>
+
+	
+</div>
+
+<script type="text/javascript">
+var highlander_expando_javascript = function(){
+	var input = document.createElement( 'input' ),
+	    comment = jQuery( '#comment' );
+
+	if ( 'placeholder' in input ) {
+		comment.attr( 'placeholder', jQuery( '.comment-textarea label' ).remove().text() );
+	}
+
+	// Expando Mode: start small, then auto-resize on first click + text length
+	jQuery( '#comment-form-identity' ).hide();
+	jQuery( '#comment-form-subscribe' ).hide();
+	jQuery( '#commentform .form-submit' ).hide();
+
+	comment.css( { 'height':'10px' } ).one( 'focus', function() {
+		var timer = setInterval( HighlanderComments.resizeCallback, 10 )
+		jQuery( this ).animate( { 'height': HighlanderComments.initialHeight } ).delay( 100 ).queue( function(n) { clearInterval( timer ); HighlanderComments.resizeCallback(); n(); } );
+		jQuery( '#comment-form-identity' ).slideDown();
+		jQuery( '#comment-form-subscribe' ).slideDown();
+		jQuery( '#commentform .form-submit' ).slideDown();
+	});
+}
+jQuery(document).ready( highlander_expando_javascript );
+</script>
+
+<div style="display: none;" id="comment-form-subscribe">
+	<p class="comment-subscription-form"><input name="subscribe" id="subscribe" value="subscribe" style="width: auto;" tabindex="6" type="checkbox"> <label class="subscribe-label" id="subscribe-label" for="subscribe" style="display: inline;">Notify me of new comments via email.</label></p></div>
+
+												<p style="display: none;" class="form-submit">
+							<input name="submit" id="comment-submit" class="submit" value="Post Comment" type="submit">
+							<input name="comment_post_ID" value="558" id="comment_post_ID" type="hidden">
+<input name="comment_parent" id="comment_parent" value="0" type="hidden">
+						</p>
+						<p style="display: none;"><input id="akismet_comment_nonce" name="akismet_comment_nonce" value="cb8bdfeb60" type="hidden"></p>
+<input name="genseq" value="1415803818" type="hidden">
+<p style="display: none;"></p>					<input id="ak_js" name="ak_js" value="1415803854125" type="hidden"></form>
+							</div><!-- #respond -->
+			<div style="clear: both"></div>
+</div><!-- #comments -->
+
+
+			</div><!-- #content -->
+		</div><!-- #container -->
+
+
+		<div id="primary" class="widget-area" role="complementary">
+						<ul class="xoxo">
+
+<li id="search-3" class="widget-container widget_search"><h3 class="widget-title">Seek ye here</h3><form role="search" method="get" id="searchform" class="searchform" action="http://mattsql.wordpress.com/">
+				<div>
+					<label class="screen-reader-text" for="s">Search for:</label>
+					<input name="s" id="s" type="text">
+					<input id="searchsubmit" value="Search" type="submit">
+				</div>
+			</form></li><li id="tag_cloud-2" class="widget-container widget_tag_cloud"><h3 class="widget-title">Non Clustered Index</h3><div style="overflow: hidden;"><a sl-processed="1" href="http://mattsql.wordpress.com/category/books/" style="font-size: 100%; padding: 1px; margin: 1px;" title="Books (1)">Books</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/database-options/" style="font-size: 165.30612244898%; padding: 1px; margin: 1px;" title="Database options (17)">Database options</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/database-theory/" style="font-size: 128.57142857143%; padding: 1px; margin: 1px;" title="Database Theory (8)">Database Theory</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/disaster-recovery/" style="font-size: 144.89795918367%; padding: 1px; margin: 1px;" title="Disaster Recovery (12)">Disaster Recovery</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/plan-cache/" style="font-size: 104.08163265306%; padding: 1px; margin: 1px;" title="Plan cache (2)">Plan cache</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/security/" style="font-size: 144.89795918367%; padding: 1px; margin: 1px;" title="Security (12)">Security</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/service-broker/" style="font-size: 108.16326530612%; padding: 1px; margin: 1px;" title="Service Broker (3)">Service Broker</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/sql-server/" style="font-size: 300%; padding: 1px; margin: 1px;" title="SQL Server (50)">SQL Server</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/ssas/" style="font-size: 108.16326530612%; padding: 1px; margin: 1px;" title="SSAS (3)">SSAS</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/ssis/" style="font-size: 100%; padding: 1px; margin: 1px;" title="SSIS (1)">SSIS</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/t-sql/" style="font-size: 214.28571428571%; padding: 1px; margin: 1px;" title="T-SQL (29)">T-SQL</a> <a sl-processed="1" href="http://mattsql.wordpress.com/category/uncategorized/" style="font-size: 112.24489795918%; padding: 1px; margin: 1px;" title="Uncategorized (4)">Uncategorized</a> </div></li>			</ul>
+		</div><!-- #primary .widget-area -->
+
+
+		<div id="secondary" class="widget-area" role="complementary">
+			<ul class="xoxo">
+						<li id="recent-posts-3" class="widget-container widget_recent_entries">		<h3 class="widget-title">Blog History</h3>		<ul>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/11/06/another-great-reason-to-enable-remote-admin-connections/">Another great reason to enable remote admin&nbsp;connections</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/">Tracking down CPU spikes using process explorer and&nbsp;DMVs</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/07/the-full-text-error-and-why-i-was-happy-to-see-it/">The full text error and why I was happy to see&nbsp;it.</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/05/07/migrating-sql-server-logins/">Migrating SQL Server&nbsp;logins</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/04/10/rolling-back-transactions-with-cursors-and-local-variables/">Rolling back transactions with cursors and local&nbsp;variables.</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/03/27/quick-tip-migrating-a-sql-server-mirroring-witness-server/">Quick Tip: Migrating a SQL Server Mirroring Witness&nbsp;server.</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/03/13/quick-tip-querying-ad-with-xp_logininfo/">Quick tip: Querying AD with&nbsp;xp_logininfo</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/02/27/issue-with-sys-dm_db_index_usage_stats-in-sql-server-2012/">Issue with sys.dm_db_index_usage_stats in SQL Server&nbsp;2012</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/02/13/sql-server-configuration-files/">SQL Server configuration&nbsp;files</a>
+						</li>
+					<li>
+				<a sl-processed="1" href="http://mattsql.wordpress.com/2014/02/04/conditional-aggregates/">Conditional Aggregates</a>
+						</li>
+				</ul>
+		</li><li id="archives-3" class="widget-container widget_archive"><h3 class="widget-title">Backups</h3>		<ul>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2014/11/">November 2014</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2014/10/">October 2014</a>&nbsp;(2)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2014/05/">May 2014</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2014/04/">April 2014</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2014/03/">March 2014</a>&nbsp;(2)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2014/02/">February 2014</a>&nbsp;(3)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2014/01/">January 2014</a>&nbsp;(3)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2013/08/">August 2013</a>&nbsp;(2)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2013/07/">July 2013</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2013/05/">May 2013</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2013/04/">April 2013</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2013/02/">February 2013</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2013/01/">January 2013</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/11/">November 2012</a>&nbsp;(1)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/10/">October 2012</a>&nbsp;(3)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/09/">September 2012</a>&nbsp;(2)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/08/">August 2012</a>&nbsp;(2)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/07/">July 2012</a>&nbsp;(2)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/06/">June 2012</a>&nbsp;(3)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/05/">May 2012</a>&nbsp;(4)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/04/">April 2012</a>&nbsp;(4)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/03/">March 2012</a>&nbsp;(2)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2012/02/">February 2012</a>&nbsp;(4)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2011/12/">December 2011</a>&nbsp;(4)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2011/09/">September 2011</a>&nbsp;(6)</li>
+	<li><a sl-processed="1" href="http://mattsql.wordpress.com/2011/08/">August 2011</a>&nbsp;(3)</li>
+		</ul>
+</li><li id="text-3" class="widget-container widget_text">			<div class="textwidget"><a sl-processed="1" href="http://www.experts-exchange.com/M_6432872.html"><img src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/150_Standard.gif" border="0"></a></div>
+		</li>			</ul>
+		</div><!-- #secondary .widget-area -->
+
+	</div><!-- #main -->
+
+	<div id="footer" role="contentinfo">
+		<div id="colophon">
+
+
+
+			<div id="footer-widget-area" role="complementary">
+
+				<div id="first" class="widget-area">
+					<ul class="xoxo">
+						<li id="blog_subscription-3" class="widget-container widget_blog_subscription"><h3 class="widget-title"><label for="subscribe-field">Email Subscription</label></h3>
+				<form action="https://subscribe.wordpress.com" method="post" accept-charset="utf-8" id="subscribe-blog">
+											<p>Enter your email address to subscribe to this blog and receive notifications of new posts by email.</p>
+<p>Join 28 other followers</p>
+						<p><input name="email" style="width: 95%; padding: 1px 2px" placeholder="Enter your email address" id="subscribe-field" type="text"></p>
+					
+					<p>
+						<input name="action" value="subscribe" type="hidden">
+						<input name="blog_id" value="26251345" type="hidden">
+						<input name="source" value="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" type="hidden">
+						<input name="sub-type" value="widget" type="hidden">
+						<input name="redirect_fragment" value="blog_subscription-3" type="hidden">
+						<input id="_wpnonce" name="_wpnonce" value="130b45b678" type="hidden">						<input value="Sign me up!" type="submit">
+					</p>
+				</form>
+			
+</li>					</ul>
+				</div><!-- #first .widget-area -->
+
+
+
+				<div id="fourth" class="widget-area">
+					<ul class="xoxo">
+						<li id="linkcat-1356" class="widget-container widget_links"><h3 class="widget-title">Blogroll</h3>
+	<ul class="xoxo blogroll">
+<li><a sl-processed="1" href="http://www.brentozar.com/" title="Excellent accessible SQL wisdoms" target="_blank">Brent Ozar &amp; friends</a></li>
+<li><a sl-processed="1" href="http://sqlserverperformance.wordpress.com/" target="_blank">Glenn Berry</a></li>
+<li><a sl-processed="1" href="http://www.simple-talk.com/author/joe-celko/" title="Deep dive relational theory" target="_blank">Joe Celko</a></li>
+<li><a sl-processed="1" href="http://sqlblog.com/blogs/paul_white/default.aspx" title="Fellow kiwi. " target="_blank">Paul White</a></li>
+<li><a sl-processed="1" href="http://sqlinthewild.co.za/" title="Gail Collins – performance guru" target="_blank">SQL in the wild</a></li>
+<li><a sl-processed="1" href="http://sqlskills.com/" title="Paul Randal &amp; Kimberly Tripp, MVPs and MCM trainers" target="_blank">SQL Skills</a></li>
+<li><a sl-processed="1" href="http://vihart.com/" title="Geeky math fun" target="_blank">Vi Hart</a></li>
+
+	</ul>
+</li>
+					</ul>
+				</div><!-- #fourth .widget-area -->
+
+			</div><!-- #footer-widget-area -->
+
+			<div id="site-info">
+				<a sl-processed="1" href="http://mattsql.wordpress.com/" title="ctrl-alt-geek" rel="home">
+					ctrl-alt-geek				</a>
+			</div><!-- #site-info -->
+
+			<div id="site-generator">
+				<a sl-processed="1" href="https://wordpress.com/themes/twentyten/" title="Learn more about this theme">The Twenty Ten Theme</a>.				<a sl-processed="1" href="https://wordpress.com/?ref=footer_website">Create a free website or blog at WordPress.com</a>.
+			</div><!-- #site-generator -->
+
+		</div><!-- #colophon -->
+	</div><!-- #footer -->
+
+</div><!-- #wrapper -->
+
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/gprofiles.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var WPGroHo = {"my_hash":""};
+/* ]]> */
+</script>
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/wpgroho.js"></script>
+
+	<script>
+		//initialize and attach hovercards to all gravatars
+		jQuery( document ).ready( function( $ ) {
+			if ( typeof Gravatar.init !== "function" ) {
+				return;
+			}			
+
+			Gravatar.profile_cb = function( hash, id ) {
+				WPGroHo.syncProfileData( hash, id );
+			};
+			Gravatar.my_hash = WPGroHo.my_hash;
+			Gravatar.init( 'body', '#wp-admin-bar-my-account' );
+		});
+	</script>
+
+		<div style="display:none">
+	<div class="grofile-hash-map-6c8c5bb85505f465b0abf4e549b08fb1">
+	</div>
+	</div>
+<script type="text/javascript">
+/* <![CDATA[ */
+var HighlanderComments = {"loggingInText":"Logging In\u2026","submittingText":"Posting Comment\u2026","postCommentText":"Post Comment","connectingToText":"Connecting to %s","commentingAsText":"%1$s: You are commenting using your %2$s account.","logoutText":"Log Out","loginText":"Log In","connectURL":"http:\/\/mattsql.wordpress.com\/public.api\/connect\/?action=request","logoutURL":"https:\/\/mattsql.wordpress.com\/wp-login.php?action=logout&_wpnonce=053470045e","homeURL":"http:\/\/mattsql.wordpress.com\/","postID":"558","gravDefault":"identicon","enterACommentError":"Please enter a comment","enterEmailError":"Please enter your email address here","invalidEmailError":"Invalid email address","enterAuthorError":"Please enter your name here","gravatarFromEmail":"This picture will show whenever you leave a comment. Click to customize it.","logInToExternalAccount":"Log in to use details from one of these accounts.","change":"Change","changeAccount":"Change Account","comment_registration":"0","userIsLoggedIn":"","isJetpack":"0"};
+/* ]]> */
+</script>
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a.js"></script>
+
+	<div style="bottom: -238px;" id="bit" class="loggedout-follow-normal">
+		<a sl-processed="1" class="bsub" href="javascript:void(0)"><span id="bsub-text">Follow</span></a>
+		<div id="bitsubscribe">
+
+					<h3><label for="loggedout-follow-field">Follow “ctrl-alt-geek”</label></h3>
+
+			<form action="https://subscribe.wordpress.com" method="post" accept-charset="utf-8" id="loggedout-follow">
+			<p>Get every new post delivered to your Inbox.</p>
+
+			<p id="loggedout-follow-error" style="display: none;"></p>
+
+						<p class="bit-follow-count">Join 28 other followers</p>
+			<p><input name="email" value="Enter your email address" onfocus='this.value=(this.value=="Enter your email address") ? "" : this.value;' onblur='this.value=(this.value=="") ? "Enter your email address" : this.value;' id="loggedout-follow-field" type="email"></p>
+
+			<input name="action" value="subscribe" type="hidden">
+			<input name="blog_id" value="26251345" type="hidden">
+			<input name="source" value="http://mattsql.wordpress.com/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" type="hidden">
+			<input name="sub-type" value="loggedout-follow" type="hidden">
+
+			<input id="_wpnonce" name="_wpnonce" value="130b45b678" type="hidden"><input name="_wp_http_referer" value="/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" type="hidden">
+			<p id="bsub-subscribe-button"><input value="Sign me up" type="submit"></p>
+			</form>
+					<div id="bsub-credit"><a sl-processed="1" href="https://wordpress.com/?ref=lof">Build a website with WordPress.com</a></div>
+		</div><!-- #bitsubscribe -->
+	</div><!-- #bit -->
+<script type="text/javascript" charset="UTF-8" id="polldaddyRatings"><!--//--><![CDATA[//><!--
+PDRTJS_settings_5547600_post_558={"id":5547600,"unique_id":"wp-post-558","title":"Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%26nbsp%3BDMVs","permalink":"http:\/\/mattsql.wordpress.com\/2014\/10\/15\/tracking-down-cpu-spikes-using-process-explorer-and-dmvs\/","item_id":"_post_558"}; if ( typeof PDRTJS_RATING !== 'undefined' ){if ( typeof PDRTJS_5547600_post_558 == 'undefined' ){PDRTJS_5547600_post_558 = new PDRTJS_RATING( PDRTJS_settings_5547600_post_558 );}}
+//--><!]]></script><script type="text/javascript" charset="UTF-8" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/rating.js"></script>
+	<script type="text/javascript">
+		WPCOM_sharing_counts = {"http:\/\/mattsql.wordpress.com\/2014\/10\/15\/tracking-down-cpu-spikes-using-process-explorer-and-dmvs\/":558}	</script>
+		<script type="text/javascript">
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-linkedin' ).on( 'click', function() {
+				window.open( jQuery(this).attr( 'href' ), 'wpcomlinkedin', 'menubar=1,resizable=1,width=580,height=450' );
+				return false;
+			});
+		});
+		</script>
+				<script type="text/javascript">
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-google-plus-1' ).on( 'click', function() {
+				window.open( jQuery(this).attr( 'href' ), 'wpcomgoogle-plus-1', 'menubar=1,resizable=1,width=480,height=550' );
+				return false;
+			});
+		});
+		</script>
+			
+		<iframe src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/master.htm" scrolling="no" id="likes-master" name="likes-master" style="display:none;"></iframe>
+		<div id="likes-other-gravatars"><div class="likes-text"><span>%d</span> bloggers like this:</div><ul class="wpl-avatars sd-like-gravatars"></ul></div>
+		<script type="text/javascript">
+		//<![CDATA[
+			var jetpackLikesWidgetQueue = [];
+			var jetpackLikesWidgetBatch = [];
+			var jetpackLikesMasterReady = false;
+
+			function JetpackLikespostMessage( message, target ) {
+				if ( "string" === typeof message ){
+					try{
+						message = JSON.parse( message );
+					}
+					catch(e) {
+						return;
+					}
+				}
+
+				pm( {
+					target: target,
+					type: 'likesMessage',
+					data: message,
+					origin: '*'
+				} );
+			}
+
+			function JetpackLikesBatchHandler() {
+				var requests = [];
+				jQuery( 'div.jetpack-likes-widget-unloaded' ).each( function( i ) {
+					if ( jetpackLikesWidgetBatch.indexOf( this.id ) > -1 )
+						return;
+					jetpackLikesWidgetBatch.push( this.id );
+					var regex = /like-(post|comment)-wrapper-(\d+)-(\d+)-(\w+)/;
+					var match = regex.exec( this.id );
+					if ( ! match || match.length != 5 )
+						return;
+
+					var info = {
+						blog_id: match[2],
+						width:   this.width
+					};
+
+					if ( 'post' == match[1] ) {
+						info.post_id = match[3];
+					} else if ( 'comment' == match[1] ) {
+						info.comment_id = match[3];
+					}
+
+					info.obj_id = match[4];
+
+					requests.push( info );
+				});
+
+				if ( requests.length > 0 ) {
+					JetpackLikespostMessage( { event: 'initialBatch', requests: requests }, window.frames['likes-master'] );
+				}
+			}
+
+			function JetpackLikesMessageListener( event ) {
+				if ( "undefined" == typeof event.event )
+					return;
+
+				if ( 'masterReady' == event.event ) {
+					jQuery( document ).ready( function() {
+						jetpackLikesMasterReady = true;
+
+						var stylesData = {
+								event: 'injectStyles'
+						};
+
+						if ( jQuery( 'iframe.admin-bar-likes-widget' ).length > 0 ) {
+							JetpackLikespostMessage( { event: 'adminBarEnabled' }, window.frames[ 'likes-master' ] );
+
+							stylesData.adminBarStyles = {
+								background: jQuery( '#wpadminbar .quicklinks li#wp-admin-bar-wpl-like > a' ).css( 'background' ),
+								isRtl: ( 'rtl' == jQuery( '#wpadminbar' ).css( 'direction' ) )
+							};
+						}
+
+						if ( !window.addEventListener )
+							jQuery( '#wp-admin-bar-admin-bar-likes-widget' ).hide();
+
+						stylesData.textStyles = {
+							color: jQuery( '.sd-text-color').css( 'color' ),
+							fontFamily: jQuery( '.sd-text-color' ).css( 'font-family' ),
+							fontSize: jQuery( '.sd-text-color' ).css( 'font-size' ),
+							direction: jQuery( '.sd-text-color' ).css( 'direction' ),
+							fontWeight: jQuery( '.sd-text-color' ).css( 'font-weight' ),
+							fontStyle: jQuery( '.sd-text-color' ).css( 'font-style' ),
+							textDecoration: jQuery( '.sd-text-color' ).css('text-decoration')
+						};
+
+						stylesData.linkStyles = {
+							color: jQuery( '.sd-link-color' ).css('color'),
+							fontFamily: jQuery( '.sd-link-color' ).css('font-family'),
+							fontSize: jQuery( '.sd-link-color' ).css('font-size'),
+							textDecoration: jQuery( '.sd-link-color' ).css('text-decoration'),
+							fontWeight: jQuery( '.sd-link-color' ).css( 'font-weight' ),
+							fontStyle: jQuery( '.sd-link-color' ).css( 'font-style' )
+						};
+
+						JetpackLikespostMessage( stylesData, window.frames[ 'likes-master' ] );
+
+						JetpackLikesBatchHandler();
+
+						jQuery( document ).on( 'inview', 'div.jetpack-likes-widget-unloaded', function() {
+							jetpackLikesWidgetQueue.push( this.id );
+						});
+					});
+				}
+
+				if ( 'showLikeWidget' == event.event ) {
+					jQuery( '#' + event.id + ' .post-likes-widget-placeholder'  ).fadeOut( 'fast', function() {
+						jQuery( '#' + event.id + ' .post-likes-widget' ).fadeIn( 'fast', function() {
+							JetpackLikespostMessage( { event: 'likeWidgetDisplayed', blog_id: event.blog_id, post_id: event.post_id, obj_id: event.obj_id }, window.frames['likes-master'] );
+						});
+					});
+				}
+
+				if ( 'clickReblogFlair' == event.event ) {
+					wpcom_reblog.toggle_reblog_box_flair( event.obj_id );
+				}
+
+				if ( 'showOtherGravatars' == event.event ) {
+					var $container = jQuery( '#likes-other-gravatars' );
+					var $list = $container.find( 'ul' );
+
+					$container.hide();
+					$list.html( '' );
+
+					$container.find( '.likes-text span' ).text( event.total );
+
+					jQuery.each( event.likers, function( i, liker ) {
+						$list.append( '<li class="' + liker.css_class + '"><a href="' + liker.profile_URL + '" class="wpl-liker" rel="nofollow" target="_parent"><img src="' + liker.avatar_URL + '" alt="' + liker.name + '" width="30" height="30" style="padding-right: 3px;" /></a></li>');
+					} );
+
+					var offset = jQuery( "[name='" + event.parent + "']" ).offset();
+
+					$container.css( 'left', offset.left + event.position.left - 10 + 'px' );
+					$container.css( 'top', offset.top + event.position.top - 33 + 'px' );
+
+					var rowLength = Math.floor( event.width / 37 );
+					var height = ( Math.ceil( event.likers.length / rowLength ) * 37 ) + 13;
+					if ( height > 204 ) {
+						height = 204;
+					}
+
+					$container.css( 'height', height + 'px' );
+					$container.css( 'width', rowLength * 37 - 7 + 'px' );
+
+					$list.css( 'width', rowLength * 37 + 'px' );
+
+					$container.fadeIn( 'slow' );
+
+					var scrollbarWidth = $list[0].offsetWidth - $list[0].clientWidth;
+					if ( scrollbarWidth > 0 ) {
+						$container.width( $container.width() + scrollbarWidth );
+						$list.width( $list.width() + scrollbarWidth );
+					}
+				}
+			}
+
+			pm.bind( 'likesMessage', function(e) { JetpackLikesMessageListener(e); } );
+
+			jQuery( document ).click( function( e ) {
+				var $container = jQuery( '#likes-other-gravatars' );
+
+				if ( $container.has( e.target ).length === 0 ) {
+					$container.fadeOut( 'slow' );
+				}
+			});
+
+			function JetpackLikesWidgetQueueHandler() {
+				var wrapperID;
+				if ( ! jetpackLikesMasterReady ) {
+					setTimeout( JetpackLikesWidgetQueueHandler, 500 );
+					return;
+				}
+
+				if ( jetpackLikesWidgetQueue.length > 0 ) {
+					// We may have a widget that needs creating now
+					var found = false;
+					while( jetpackLikesWidgetQueue.length > 0 ) {
+						// Grab the first member of the queue that isn't already loading.
+						wrapperID = jetpackLikesWidgetQueue.splice( 0, 1 )[0];
+						if ( jQuery( '#' + wrapperID ).hasClass( 'jetpack-likes-widget-unloaded' ) ) {
+							found = true;
+							break;
+						}
+					}
+					if ( ! found ) {
+						setTimeout( JetpackLikesWidgetQueueHandler, 500 );
+						return;
+					}
+				} else if ( jQuery( 'div.jetpack-likes-widget-unloaded' ).length > 0 ) {
+					// Grab any unloaded widgets for a batch request
+					JetpackLikesBatchHandler();
+
+					// Get the next unloaded widget
+					wrapperID = jQuery( 'div.jetpack-likes-widget-unloaded' ).first()[0].id;
+					if ( ! wrapperID ) {
+						// Everything is currently loaded
+						setTimeout( JetpackLikesWidgetQueueHandler, 500 );
+						return;
+					}
+				}
+
+				if ( 'undefined' === typeof wrapperID ) {
+					setTimeout( JetpackLikesWidgetQueueHandler, 500 );
+					return;
+				}
+
+				var $wrapper = jQuery( '#' + wrapperID );
+				$wrapper.find( 'iframe' ).remove();
+
+				if ( $wrapper.hasClass( 'slim-likes-widget' ) ) {
+					$wrapper.find( '.post-likes-widget-placeholder' ).after( "<iframe class='post-likes-widget jetpack-likes-widget' name='" + $wrapper.data( 'name' ) + "' height='22px' width='68px' frameBorder='0' scrolling='no' src='" + $wrapper.data( 'src' ) + "'></iframe>" );
+				} else {
+					$wrapper.find( '.post-likes-widget-placeholder' ).after( "<iframe class='post-likes-widget jetpack-likes-widget' name='" + $wrapper.data( 'name' ) + "' height='55px' width='100%' frameBorder='0' src='" + $wrapper.data( 'src' ) + "'></iframe>" );
+				}
+
+				$wrapper.removeClass( 'jetpack-likes-widget-unloaded' ).addClass( 'jetpack-likes-widget-loading' );
+
+				$wrapper.find( 'iframe' ).load( function( e ) {
+					var $iframe = jQuery( e.target );
+					$wrapper.removeClass( 'jetpack-likes-widget-loading' ).addClass( 'jetpack-likes-widget-loaded' );
+
+					JetpackLikespostMessage( { event: 'loadLikeWidget', name: $iframe.attr( 'name' ), width: $iframe.width() }, window.frames[ 'likes-master' ] );
+
+					if ( $wrapper.hasClass( 'slim-likes-widget' ) ) {
+						$wrapper.find( 'iframe' ).Jetpack( 'resizeable' );
+					}
+				});
+				setTimeout( JetpackLikesWidgetQueueHandler, 250 );
+			}
+			JetpackLikesWidgetQueueHandler();
+		//]]>
+		</script>
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/form.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var JetpackEmojiSettings = {"base_url":"http:\/\/s0.wp.com\/wp-content\/mu-plugins\/emoji\/twemoji\/"};
+/* ]]> */
+</script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var recaptcha_options = {"lang":"en"};
+/* ]]> */
+</script>
+<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a_003.js"></script>
+<script type="text/javascript">
+// <![CDATA[
+(function() {
+try{
+  if ( window.external &&'msIsSiteMode' in window.external) {
+    if (window.external.msIsSiteMode()) {
+      var jl = document.createElement('script');
+      jl.type='text/javascript';
+      jl.async=true;
+      jl.src='/wp-content/plugins/ie-sitemode/custom-jumplist.php';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(jl, s);
+    }
+  }
+}catch(e){}
+})();
+// ]]>
+</script>	<script type="text/javascript">
+	var skimlinks_pub_id = "725X584219"
+	var skimlinks_sitename = "mattsql.wordpress.com";
+	</script>
+	<script type="text/javascript" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/725X1342.js"></script><script src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/w.js" type="text/javascript"></script>
+<script type="text/javascript">
+if(typeof trackerModule == 'object' && 'storeIdentity' in trackerModule){trackerModule.storeIdentity({'current_blog_id':'26251345','current_blog_tz':'0','current_user_lang':'en','current_blog_lang':'en','current_user_id':'0'});}
+st_go({'blog':'26251345','v':'wpcom','tz':'0','user_id':'0','post':'558','subd':'mattsql'});
+ex_go({'crypt':'UE5XaGUuOTlwaD85flAmcm1mcmZsaDhkV11YdWFnNncxc1tjZG9XVXhRW3J8TyVnZTFjeVYvfDc4K0xVWWxvcGRUW2g9LkR8YzlqLFdUel91OUJxfmNWKyZGMXkyT1RJeXBiT0g4R3lXSnc4W0JHP0JuQ2swU0l5eSx4LW5MP0d5VExWb01ONFQ2YXhZc254VlAmTz1dL2ZxaXY/UH5HOWc0bUFVSD1ySHpScmZ1PWZZNGZadlhBSTYtbGVVOHQ/P1N1eUtxN049dSZZNDlCVU5HME8sd2RVUVtPZkQ3aS92Qz9lQ1JaY1JaU111WStNQT1MTH5SX3I5THIveC8mWWd8ZGNhSGE/NEVkRCtVL1cwbGxQSUYudWFob2FCVH5MMnJ6T2R3Qjh1JVByRjlJUy5vUG5qdDZfL3NEPWYwKy5i'});
+addLoadEvent(function(){linktracker_init('26251345',558);});
+	</script><img id="wpstats" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/g.gif" alt=""><img id="wpstats2" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/g_002.gif" alt="" style="display:none">
+<noscript><img src="http://pixel.wp.com/b.gif?v=noscript" style="height:0px;width:0px;overflow:hidden" alt="" /></noscript>
+<script>
+if ( 'object' === typeof wpcom_mobile_user_agent_info ) {
+
+	wpcom_mobile_user_agent_info.init();
+	var mobileStatsQueryString = "";
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedPlatformName )
+		mobileStatsQueryString += "&x_" + 'mobile_platforms' + '=' + wpcom_mobile_user_agent_info.matchedPlatformName;
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedUserAgentName )
+		mobileStatsQueryString += "&x_" + 'mobile_devices' + '=' + wpcom_mobile_user_agent_info.matchedUserAgentName;
+	
+	if( wpcom_mobile_user_agent_info.isIPad() )
+		mobileStatsQueryString += "&x_" + 'ipad_views' + '=' + 'views';
+
+	if( "" != mobileStatsQueryString ) {
+		new Image().src = document.location.protocol + '//pixel.wp.com/g.gif?v=wpcom-no-pv' + mobileStatsQueryString + '&baba=' + Math.random();
+	}
+	
+}
+</script>
+
+<div id="sharing_email" style="display: none;">
+		<form action="/2014/10/15/tracking-down-cpu-spikes-using-process-explorer-and-dmvs/" method="post">
+			<label for="target_email">Send to Email Address</label>
+			<input name="target_email" id="target_email" type="email">
+
+			
+				<label for="source_name">Your Name</label>
+				<input name="source_name" id="source_name" type="text">
+
+				<label for="source_email">Your Email Address</label>
+				<input name="source_email" id="source_email" type="email">
+
+			
+			<div class="recaptcha" id="sharing_recaptcha"></div><input name="recaptcha_public_key" id="recaptcha_public_key" value="6LcYW8MSAAAAADBAuEH9yaPcF7lWh11Iq62ZKtoo" type="hidden">
+			<img style="float: right; display: none" class="loading" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/loading.gif" alt="loading" height="16" width="16">
+			<input value="Send Email" class="sharing_send" type="submit">
+			<a sl-processed="1" href="#cancel" class="sharing_cancel">Cancel</a>
+
+			<div class="errors errors-1" style="display: none;">
+				Post was not sent - check your email addresses!			</div>
+
+			<div class="errors errors-2" style="display: none;">
+				Email check failed, please try again			</div>
+
+			<div class="errors errors-3" style="display: none;">
+				Sorry, your blog cannot share posts by email.			</div>
+		</form>
+	</div><img style="display: none;" src="Tracking%20down%20CPU%20spikes%20using%20process%20explorer%20and%20DMVs%20_%20ctrl-alt-geek_ficheiros/a_003.htm" height="1" width="1"></body></html>

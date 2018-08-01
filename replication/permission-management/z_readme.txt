@@ -1,0 +1,3 @@
+Sometimes it is necessary to block writes at the subscriber level to guarantee that no one will be able to write to replicated tables at the subscriber by mistake. To achieve that, you can create a role, add the desired user in it and then deny the write permissions on the tables. This is what this session of scripts does. It will dinamically generate the final command in order to deny write privileges. You must still create the role and the users to it. You should also update the pointers for the destination database and server.
+
+use the .bat script to generate final scripts. Do not forget to configure the ip of the servers, database names and file destinations.
