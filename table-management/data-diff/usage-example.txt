@@ -1,4 +1,0 @@
-﻿"C:\Program Files (x86)\Microsoft SQL Server\90\COM\tablediff.exe" -sourceserver 10.128.65.29,1106 -sourcedatabase db_prd_corp -sourceschema dbo -sourcetable sku -sourceuser rafael.bahia -sourcepassword alucard__535 -destinationserver 10.128.65.31,1108 -destinationdatabase Db_prd_aoc -destinationschema dbo -destinationtable sku -destinationuser rafael.bahia -destinationpassword alucard__535 -o "c:\Dropbox\DBA\ScriptWH\DIFF\diff.txt" -f "c:\Dropbox\DBA\ScriptWH\DIFF\ajuste.sql
-
-
-tablediff -sourceserver 10.140.1.231,1198 -sourcedatabase db_des_corp_projeto -sourcetable categoria -sourcepassword alucard__535 -sourceuser rafael.bahia -destinationserver 10.140.1.231,1198 -destinationdatabase Db_des_regionalizacaocd -destinationtable categoria -destinationpassword alucard__535 -destinationuser rafael.bahia -o "c:\DropBox\Dropbox\Processos\Monitoracao\ADM\ScriptWH\DIFF\diff.txt" -f "c:\DropBox\Dropbox\Processos\Monitoracao\ADM\ScriptWH\DIFF\ajusteCategoria.sql"

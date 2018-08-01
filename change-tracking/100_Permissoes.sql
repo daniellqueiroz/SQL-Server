@@ -1,1 +1,0 @@
-GRANT VIEW change tracking ON dadosconfiguracao TO usr_extracao_mongo

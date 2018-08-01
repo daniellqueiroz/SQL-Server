@@ -1,3 +1,0 @@
--- to replace the space after each 80th caracter in string for a line break
-Find:      (?<=.{80})\s
-Replace:   $0\n
